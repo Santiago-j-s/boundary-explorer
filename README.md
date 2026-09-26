@@ -1,6 +1,6 @@
 # JS Boundary Explorer
 
-A small, private workspace for inspecting observed dependencies between JavaScript modules and functions. The [deployed explorer](https://js-boundary-explorer.santana-santiago.chatgpt.site) is owner-only.
+A small workspace for inspecting observed dependencies between JavaScript modules and functions. The source is public; the [deployed explorer](https://js-boundary-explorer.santana-santiago.chatgpt.site) remains owner-only.
 
 Import a JSON file or paste JSON in the app. The graph stays in the current browser tab; the app does not upload or persist it. Use **Sample format** in the app to download a complete example.
 
