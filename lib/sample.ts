@@ -43,4 +43,7 @@ export const sample: Graph = {
     { id: "r13", from: "prepare", to: "post", kind: "calls", source: { file: "domain/attachments.ts", line: 28, excerpt: "return postMessage.upload(file)" } },
     { id: "r14", from: "post", to: "account", kind: "reads", source: { file: "infra/api.ts", line: 42, excerpt: "const token = currentAccount().token" } },
   ],
+  rules: [
+    { id: "domain-no-ui", description: "Domain code should not depend on presentation code.", deny: { from: { layer: "Domain" }, to: { layer: "UI" } } },
+  ],
 };

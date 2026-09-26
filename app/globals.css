@@ -16,3 +16,4 @@
 
 
 @media(max-width:780px){.candidates-section{display:block}}
+.graph-edge.violates .edge-line{stroke:#ed8f83;stroke-width:2.5}.graph-edge.violates:hover .edge-line,.graph-edge.violates.active .edge-line{stroke:#ffc0ae;stroke-width:3}.rule-key{color:#ed8f83;font-weight:700}.rule-item{padding:10px 8px 14px;border-bottom:1px solid #304252}.rule-item strong,.rule-item small{display:block}.rule-item strong{font-size:13px;line-height:1.4}.rule-item small{font-size:12px;color:#efada1;margin:5px 0 9px}.rule-item button{border:0;background:transparent;padding:4px 0;display:flex;align-items:center;justify-content:space-between;width:100%;text-align:left;color:#d6e0e7;font:11px var(--font-mono)}.rule-item button:hover{color:#ffc0ae}.rule-match{border-left:2px solid #ed8f83;padding-left:8px;color:#ffc0ae!important}

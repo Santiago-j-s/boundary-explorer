@@ -1,7 +1,9 @@
 export type Module = { id: string; path: string; layer: string; summary?: string };
 export type FunctionNode = { id: string; module: string; name: string; line: number; summary?: string };
 export type Relation = { id: string; from: string; to: string; kind: "imports" | "calls" | "reads" | "writes" | "references"; source: { file: string; line: number; excerpt: string }; note?: string };
-export type Graph = { name: string; modules: Module[]; functions: FunctionNode[]; relations: Relation[] };
+export type Selector = { module?: string; layer?: string };
+export type BoundaryRule = { id: string; description: string; deny: { from: Selector; to: Selector; kinds?: Relation["kind"][] } };
+export type Graph = { name: string; modules: Module[]; functions: FunctionNode[]; relations: Relation[]; rules?: BoundaryRule[] };
 export type ModuleLink = { from: string; to: string; relations: Relation[] };
 
 export const kinds: Relation["kind"][] = ["imports", "calls", "reads", "writes", "references"];
@@ -46,11 +48,35 @@ export function parseGraph(input: string): Graph {
   }
   const relationIds = new Set<string>();
   for (const [i, r] of g.relations.entries()) {
-    if (!r || typeof r.id !== "string" || !r.id || relationIds.has(r.id) || !ids.has(r.from) || !ids.has(r.to) || !kinds.includes(r.kind) || !r.source || typeof r.source.file !== "string" || !r.source.file || !Number.isInteger(r.source.line) || r.source.line < 1 || typeof r.source.excerpt !== "string")
+    if (!r || typeof r.id !== "string" || !r.id || relationIds.has(r.id) || !ids.has(r.from) || !ids.has(r.to) || !kinds.includes(r.kind) || !r.source || typeof r.source.file !== "string" || !r.source.file || !Number.isInteger(r.source.line) || r.source.line < 1 || typeof r.source.excerpt !== "string" || !r.source.excerpt.trim())
       throw new Error(`relations[${i}] needs a unique id, known endpoints, kind, and source { file, line, excerpt }.`);
     relationIds.add(r.id);
   }
+  if (g.rules !== undefined && !Array.isArray(g.rules)) throw new Error("rules must be an array when provided.");
+  const ruleIds = new Set<string>();
+  for (const [i, rule] of (g.rules || []).entries()) {
+    const validSelector = (selector: Selector | undefined) => selector && typeof selector === "object" && !Array.isArray(selector)
+      && (selector.module !== undefined || selector.layer !== undefined)
+      && (selector.module === undefined || (typeof selector.module === "string" && modules.has(selector.module)))
+      && (selector.layer === undefined || (typeof selector.layer === "string" && !!selector.layer.trim()));
+    if (!rule || typeof rule.id !== "string" || !rule.id || ruleIds.has(rule.id) || typeof rule.description !== "string" || !rule.description
+      || !rule.deny || !validSelector(rule.deny.from) || !validSelector(rule.deny.to)
+      || (rule.deny.kinds !== undefined && (!Array.isArray(rule.deny.kinds) || !rule.deny.kinds.length || rule.deny.kinds.some(kind => !kinds.includes(kind)))))
+      throw new Error(`rules[${i}] needs a unique id, description, and deny { from, to, optional kinds }. Selectors need a known module id or layer.`);
+    ruleIds.add(rule.id);
+  }
   return g as Graph;
+}
+
+export type RuleFinding = { rule: BoundaryRule; relations: Relation[] };
+export function ruleFindings(graph: Graph): RuleFinding[] {
+  const byId = new Map(graph.modules.map(m => [m.id, m]));
+  const matches = (id: string, selector: Selector) => {
+    const m = byId.get(moduleOf(graph, id) || "");
+    return !!m && (selector.module === undefined || m.id === selector.module) && (selector.layer === undefined || m.layer === selector.layer);
+  };
+  return (graph.rules || []).map(rule => ({ rule, relations: graph.relations.filter(r =>
+    matches(r.from, rule.deny.from) && matches(r.to, rule.deny.to) && (!rule.deny.kinds || rule.deny.kinds.includes(r.kind))) }));
 }
 
 export type Candidate = { key: string; title: string; detail: string; moduleId: string; relationIds: string[]; level: "strong" | "review" };

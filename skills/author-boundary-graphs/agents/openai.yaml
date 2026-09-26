@@ -1,0 +1,4 @@
+interface:
+  display_name: "Author Boundary Graphs"
+  short_description: "Map code dependencies and review boundary rules"
+  default_prompt: "Use $author-boundary-graphs to map this code slice, check the boundary rules, and prepare JSON for the explorer."
