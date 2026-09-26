@@ -1,0 +1,46 @@
+import type { Graph } from "./graph";
+
+// Illustrative source locations. This fixture is not an analysis of a real repository.
+export const sample: Graph = {
+  name: "Message composer · example",
+  modules: [
+    { id: "composer", path: "ui/composer.tsx", layer: "UI", summary: "Renders the composer and initiates sending." },
+    { id: "toast", path: "ui/toast.ts", layer: "UI", summary: "Presents transient feedback." },
+    { id: "send", path: "domain/send.ts", layer: "Domain", summary: "Coordinates message submission." },
+    { id: "attach", path: "domain/attachments.ts", layer: "Domain", summary: "Prepares attachments for transport." },
+    { id: "drafts", path: "state/drafts.ts", layer: "State", summary: "Stores unsent text and attachments." },
+    { id: "session", path: "state/session.ts", layer: "State", summary: "Provides active account and permissions." },
+    { id: "api", path: "infra/api.ts", layer: "Infrastructure", summary: "Calls the message endpoint." },
+    { id: "cache", path: "infra/cache.ts", layer: "Infrastructure", summary: "Caches sent messages for the thread." },
+  ],
+  functions: [
+    { id: "submit", module: "composer", name: "handleSubmit", line: 44, summary: "Reads the draft, sends it, and clears the input." },
+    { id: "renderComposer", module: "composer", name: "Composer", line: 18, summary: "Renders the current draft." },
+    { id: "showError", module: "toast", name: "showError", line: 12, summary: "Displays a send failure." },
+    { id: "sendMessage", module: "send", name: "sendMessage", line: 31, summary: "Coordinates validation, upload, request, and cache update." },
+    { id: "validate", module: "send", name: "validateMessage", line: 10, summary: "Checks content and account state." },
+    { id: "prepare", module: "attach", name: "prepareAttachments", line: 22, summary: "Turns files into upload descriptors." },
+    { id: "readDraft", module: "drafts", name: "readDraft", line: 16, summary: "Reads the current draft." },
+    { id: "clearDraft", module: "drafts", name: "clearDraft", line: 42, summary: "Clears the draft after success." },
+    { id: "restoreDraft", module: "drafts", name: "restoreDraft", line: 55, summary: "Restores the draft on request failure." },
+    { id: "account", module: "session", name: "currentAccount", line: 19, summary: "Reads active account identity." },
+    { id: "post", module: "api", name: "postMessage", line: 39, summary: "Performs the HTTP request." },
+    { id: "upsert", module: "cache", name: "upsertMessage", line: 51, summary: "Updates the local thread cache." },
+  ],
+  relations: [
+    { id: "r1", from: "submit", to: "sendMessage", kind: "calls", source: { file: "ui/composer.tsx", line: 49, excerpt: "await sendMessage(readDraft(threadId))" }, note: "Submission enters the domain flow." },
+    { id: "r2", from: "submit", to: "readDraft", kind: "calls", source: { file: "ui/composer.tsx", line: 49, excerpt: "await sendMessage(readDraft(threadId))" } },
+    { id: "r3", from: "submit", to: "clearDraft", kind: "calls", source: { file: "ui/composer.tsx", line: 51, excerpt: "clearDraft(threadId)" } },
+    { id: "r4", from: "renderComposer", to: "readDraft", kind: "reads", source: { file: "ui/composer.tsx", line: 24, excerpt: "const draft = readDraft(threadId)" } },
+    { id: "r5", from: "sendMessage", to: "validate", kind: "calls", source: { file: "domain/send.ts", line: 34, excerpt: "validateMessage(input, currentAccount())" } },
+    { id: "r6", from: "validate", to: "account", kind: "calls", source: { file: "domain/send.ts", line: 17, excerpt: "const account = currentAccount()" } },
+    { id: "r7", from: "sendMessage", to: "prepare", kind: "calls", source: { file: "domain/send.ts", line: 37, excerpt: "const files = await prepareAttachments(input.files)" } },
+    { id: "r8", from: "sendMessage", to: "post", kind: "calls", source: { file: "domain/send.ts", line: 38, excerpt: "const message = await postMessage(input, files)" } },
+    { id: "r9", from: "sendMessage", to: "upsert", kind: "calls", source: { file: "domain/send.ts", line: 39, excerpt: "upsertMessage(message)" } },
+    { id: "r10", from: "sendMessage", to: "showError", kind: "calls", source: { file: "domain/send.ts", line: 43, excerpt: "showError(error.message)" }, note: "Domain code reaches into presentation. Consider where error reporting belongs." },
+    { id: "r11", from: "sendMessage", to: "restoreDraft", kind: "calls", source: { file: "domain/send.ts", line: 44, excerpt: "restoreDraft(input.threadId, input.text)" } },
+    { id: "r12", from: "restoreDraft", to: "sendMessage", kind: "references", source: { file: "state/drafts.ts", line: 59, excerpt: "retry: () => sendMessage(savedInput)" }, note: "The draft store owns a retry callback into the send flow." },
+    { id: "r13", from: "prepare", to: "post", kind: "calls", source: { file: "domain/attachments.ts", line: 28, excerpt: "return postMessage.upload(file)" } },
+    { id: "r14", from: "post", to: "account", kind: "reads", source: { file: "infra/api.ts", line: 42, excerpt: "const token = currentAccount().token" } },
+  ],
+};
